@@ -1,7 +1,8 @@
 import pandas as pd
 import os
 
-src = 'C:\Projects\StravaGPX\gpx_files'
+#src = 'C:\Projects\StravaGPX\gpx_files'
+src = '/Projects/StravaGPX/gpx_files'
 
 points =[]
 recordID = []
@@ -13,8 +14,9 @@ elevations = []
 fileNames =[]
 
 trackptCount = 0
+fileCount = 0
 
-df = pd.DataFrame(columns = ['RecordID', 'FileName', 'Trackpoint', 'Lat', 'Long', 'Elevation', 'Date', 'Time'])
+df = pd.DataFrame(columns = ['RecordID', 'FileName', 'Lat', 'Long', 'Elevation', 'Date', 'Time'])
 
 
 # create some lists of flac files and their paths
@@ -40,6 +42,7 @@ def GetFiles(mySrc):
 
 def createLists(myFiles):
 	global trackptCount
+	global fileCount
 	for file in myFiles:
 		with open(file, 'r') as file:
 			temptimes = []
@@ -57,11 +60,12 @@ def createLists(myFiles):
 					
 					cleanLong = cleanLine[29:41]
 					cleanLong = cleanLong.strip()
+					cleanLong = cleanLong.strip('"')
 
 					lats.append(cleanLat)
 					longs.append(cleanLong)
 
-					fileNames.append(file)
+					fileNames.append(str(file)[42:66])
 
 
 				if cleanLine[:6] == "<time>":
@@ -79,22 +83,23 @@ def createLists(myFiles):
 					cleanElevation = cleanElevation.strip('<')
 					elevations.append(cleanElevation)
 
-				print str(trackptCount) + " of " + str(len(fullPaths))
+			fileCount = fileCount + 1
+
+			print str(fileCount) + " of " + str(len(fullPaths))
 
 			temptimes = temptimes[1:]
 			for time in temptimes:
-				times.append(times)
+				times.append(time)
 			
 			tempdates = tempdates[1:]
 			for date in tempdates:
-				dates.append(dates)
+				dates.append(date)
 
 
 GetFiles(src)
 createLists(fullPaths)
 
 df['RecordID'] = recordID
-df['Trackpoint'] = points
 df['Lat'] = lats
 df['Long'] = longs
 df['Time'] = times
@@ -105,13 +110,15 @@ df['FileName'] = fileNames
 df.to_csv("map.csv", index=False)
 
 
-# print len(recordID)
-# print len(points)
-# print len(lats)
-# print len(longs)
-# print len(times)
-# print len(dates)
-# print len(elevations)
-# print len(fileNames)
+print "RecordID: " + str(len(recordID))
+print "Points: " + str(len(points))
+print "Lats: " + str(len(lats))
+print "Longs: " + str(len(longs))
+print "Times: " + str(len(times))
+print "Dates: " + str(len(dates))
+print "Elevations: " + str(len(elevations))
+print "FileNames: " + str(len(fileNames))
+
+print df
 
 print "success"
