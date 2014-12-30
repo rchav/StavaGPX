@@ -1,8 +1,9 @@
 import pandas as pd
 import os
-
-#src = 'C:\Projects\StravaGPX\gpx_files'
-src = '/Projects/StravaGPX/gpx_files'
+import Tkinter as Tk
+import tkFileDialog
+import sys
+import time
 
 points =[]
 recordID = []
@@ -15,6 +16,7 @@ fileNames =[]
 
 trackptCount = 0
 fileCount = 0
+percent = 0
 
 df = pd.DataFrame(columns = ['RecordID', 'FileName', 'Lat', 'Long', 'Elevation', 'Date', 'Time'])
 
@@ -23,6 +25,20 @@ df = pd.DataFrame(columns = ['RecordID', 'FileName', 'Lat', 'Long', 'Elevation',
 fullPaths = []
 justFileNames = []
 
+def AskForFolderLocation():
+    # Request file location from user
+    global src
+    root = Tk.Tk()
+    root.withdraw()
+    root.overrideredirect(True)
+    root.geometry('0x0+0+0')
+    root.deiconify()
+    root.lift()
+    root.focus_force()
+    
+    #ask user for file location
+    src = tkFileDialog.askdirectory(parent=root)
+    root.destroy()
 
 def GetFiles(mySrc):
     # loop time
@@ -43,6 +59,7 @@ def GetFiles(mySrc):
 def createLists(myFiles):
 	global trackptCount
 	global fileCount
+	global percent
 	for file in myFiles:
 		with open(file, 'r') as file:
 			temptimes = []
@@ -83,9 +100,8 @@ def createLists(myFiles):
 					cleanElevation = cleanElevation.strip('<')
 					elevations.append(cleanElevation)
 
-			fileCount = fileCount + 1
-
-			print str(fileCount) + " of " + str(len(fullPaths))
+			sys.stdout.write("\r%d%% complete" % percent)
+			sys.stdout.flush()
 
 			temptimes = temptimes[1:]
 			for time in temptimes:
@@ -96,6 +112,11 @@ def createLists(myFiles):
 				dates.append(date)
 
 
+			fileCount = fileCount + 1
+			percent = fileCount/len(fullPaths) * 100
+
+
+AskForFolderLocation()
 GetFiles(src)
 createLists(fullPaths)
 
@@ -107,7 +128,9 @@ df['Date'] = dates
 df['Elevation'] = elevations
 df['FileName'] = fileNames
 
-df.to_csv("map.csv", index=False)
+writer = pd.ExcelWriter('map.xlsx', engine='xlsxwriter')
+df.to_excel(writer, sheet_name='Sheet1')
+writer.save
 
 
 print "RecordID: " + str(len(recordID))
@@ -121,4 +144,7 @@ print "FileNames: " + str(len(fileNames))
 
 print df
 
-print "success"
+if len(recordID) == 0:
+	print "\nLooks like something went wrong..."
+else: 
+	print "\nSuccess!"
